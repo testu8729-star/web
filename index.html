@@ -4,26 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QuickInvoice - Free Instant Invoice Maker</title>
+  <meta name="description" content="Create, customize, and download professional PDF invoices instantly for free. Perfect for freelancers and small businesses." />
+  
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- html2pdf.js Engine for Clean PDF Exports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
     @media print {
       .no-print { display: none !important; }
       body { background: white !important; padding: 0 !important; }
-      .print-area { shadow: none !important; border: none !important; width: 100% !important; margin: 0 !important; }
+      .print-area { box-shadow: none !important; border: none !important; width: 100% !important; margin: 0 !important; }
+    }
+    /* PDF Export Container Tweaks */
+    .pdf-render {
+      width: 800px !important;
+      padding: 40px !important;
+      background: #ffffff !important;
     }
   </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 min-h-screen flex flex-col">
 
-  <!-- Header / Navigation -->
+  <!-- Navigation Bar -->
   <header class="no-print bg-slate-900 text-white py-4 px-6 shadow-md flex justify-between items-center">
     <div class="flex items-center space-x-2">
-      <div class="bg-blue-600 text-white p-2 rounded-lg font-bold text-xl">QI</div>
+      <div class="bg-blue-600 text-white p-2 rounded-lg font-bold text-xl leading-none">QI</div>
       <span class="text-xl font-bold tracking-wide">QuickInvoice</span>
     </div>
-    <div class="flex items-center space-x-4">
-      <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow transition">
-        Print / Save PDF
+    <div class="flex items-center space-x-3">
+      <button onclick="downloadPDF()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow transition flex items-center space-x-1">
+        <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/></svg>
+        <span>Download PDF</span>
       </button>
       <button onclick="toggleModal(true)" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 px-4 rounded-lg shadow transition">
         Upgrade to Pro ⭐
@@ -31,44 +45,65 @@
     </div>
   </header>
 
-  <!-- Top Ad Slot Banner (Monetization Space) -->
+  <!-- Top Ad Unit Banner -->
   <div class="no-print max-w-5xl mx-auto w-full mt-4 px-4">
-    <div class="bg-gray-200 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-xs text-gray-500 uppercase tracking-wider">
-      [ Responsive Ad Unit Banner - Google AdSense ]
+    <div class="bg-white border border-gray-200 rounded-lg p-2 text-center text-xs text-gray-400 min-h-[90px] flex items-center justify-center">
+      <!-- REPLACE THIS COMMENT WITH YOUR GOOGLE ADSENSE CODE SLOT -->
+      <!-- Example:
+      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      -->
+      <span>[ Ad Space - Insert Google AdSense Banner Slot ]</span>
     </div>
   </div>
 
   <!-- Main Workspace -->
-  <main class="flex-grow max-w-5xl mx-auto w-full p-4 my-4 flex flex-col md:flex-row gap-6">
+  <main class="flex-grow max-w-5xl mx-auto w-full p-4 my-2 flex flex-col md:flex-row gap-6">
     
     <!-- Invoice Canvas -->
-    <div class="print-area bg-white rounded-xl shadow-lg border border-gray-200 p-8 flex-grow">
+    <div id="invoice-canvas" class="print-area bg-white rounded-xl shadow-lg border border-gray-200 p-8 flex-grow relative">
       
-      <!-- Top Row: Business Info & Logo -->
+      <!-- Company Header & Details -->
       <div class="flex justify-between items-start mb-8 border-b pb-6">
-        <div>
-          <input type="text" value="YOUR COMPANY NAME" class="text-2xl font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded w-full" />
-          <input type="text" value="Address, City, Country" class="text-sm text-gray-500 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded w-full mt-1" />
-          <input type="text" value="tax@company.com | +1 234 567 890" class="text-sm text-gray-500 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded w-full" />
+        <div class="space-y-1 w-1/2">
+          <input type="text" id="comp-name" value="YOUR COMPANY NAME" oninput="saveData()" class="text-2xl font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded w-full" />
+          <input type="text" id="comp-address" value="123 Business Street, City, Country" oninput="saveData()" class="text-sm text-gray-500 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded w-full" />
+          <input type="text" id="comp-contact" value="billing@company.com | +1 234 567 890" oninput="saveData()" class="text-sm text-gray-500 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded w-full" />
         </div>
-        <div class="text-right">
+        <div class="text-right w-1/2">
           <h1 class="text-3xl font-extrabold text-blue-600 tracking-wider">INVOICE</h1>
-          <div class="mt-2 text-sm text-gray-600">
-            <label class="font-semibold">Invoice #:</label>
-            <input type="text" value="INV-1001" class="font-mono text-right w-24 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" /><br />
-            <label class="font-semibold">Date:</label>
-            <input type="date" id="inv-date" class="text-right w-32 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" /><br />
-            <label class="font-semibold">Due Date:</label>
-            <input type="date" id="due-date" class="text-right w-32 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" />
+          <div class="mt-2 text-sm text-gray-600 space-y-1">
+            <div>
+              <label class="font-semibold">Invoice #:</label>
+              <input type="text" id="inv-num" value="INV-1001" oninput="saveData()" class="font-mono text-right w-28 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" />
+            </div>
+            <div>
+              <label class="font-semibold">Currency:</label>
+              <select id="currency-select" onchange="calculateTotals(); saveData();" class="text-right outline-none bg-transparent hover:bg-gray-50 focus:bg-gray-50 p-1 rounded font-semibold text-gray-700">
+                <option value="$">$ (USD)</option>
+                <option value="€">€ (EUR)</option>
+                <option value="£">£ (GBP)</option>
+                <option value="₹">₹ (INR)</option>
+                <option value="A$">A$ (AUD)</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-semibold">Date:</label>
+              <input type="date" id="inv-date" onchange="saveData()" class="text-right w-32 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" />
+            </div>
+            <div>
+              <label class="font-semibold">Due Date:</label>
+              <input type="date" id="due-date" onchange="saveData()" class="text-right w-32 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" />
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Client Info -->
-      <div class="mb-8 bg-gray-50 p-4 rounded-lg border">
+      <div class="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
-        <input type="text" value="Client / Business Name" class="font-bold text-gray-800 outline-none hover:bg-white focus:bg-white p-1 rounded w-full" />
-        <input type="text" value="Client Address, City, Country" class="text-sm text-gray-600 outline-none hover:bg-white focus:bg-white p-1 rounded w-full mt-1" />
+        <input type="text" id="client-name" value="Client / Business Name" oninput="saveData()" class="font-bold text-gray-800 outline-none hover:bg-white focus:bg-white p-1 rounded w-full" />
+        <input type="text" id="client-address" value="Client Address, City, Country" oninput="saveData()" class="text-sm text-gray-600 outline-none hover:bg-white focus:bg-white p-1 rounded w-full mt-1" />
       </div>
 
       <!-- Line Items Table -->
@@ -77,21 +112,21 @@
           <tr class="border-b text-xs font-semibold text-gray-500 uppercase tracking-wider">
             <th class="py-2 w-1/2">Description</th>
             <th class="py-2 text-center w-1/6">Qty</th>
-            <th class="py-2 text-right w-1/6">Price ($)</th>
-            <th class="py-2 text-right w-1/6">Amount ($)</th>
+            <th class="py-2 text-right w-1/6">Price</th>
+            <th class="py-2 text-right w-1/6">Amount</th>
             <th class="py-2 text-center no-print w-10"></th>
           </tr>
         </thead>
         <tbody id="items-body">
           <tr class="border-b item-row">
             <td class="py-2">
-              <input type="text" value="Web Design & Development" class="w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" />
+              <input type="text" value="Web Design & Development" oninput="saveData()" class="desc w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" />
             </td>
             <td class="py-2 text-center">
-              <input type="number" value="1" min="1" oninput="calculateTotals()" class="qty w-16 text-center outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" />
+              <input type="number" value="1" min="1" oninput="calculateTotals(); saveData();" class="qty w-16 text-center outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" />
             </td>
             <td class="py-2 text-right">
-              <input type="number" value="1200.00" step="0.01" oninput="calculateTotals()" class="price w-24 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" />
+              <input type="number" value="1200.00" step="0.01" oninput="calculateTotals(); saveData();" class="price w-24 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" />
             </td>
             <td class="py-2 text-right font-medium text-sm amount">1200.00</td>
             <td class="py-2 text-center no-print">
@@ -114,7 +149,7 @@
           </div>
           <div class="flex justify-between items-center text-gray-600">
             <span>Tax Rate (%):</span>
-            <input type="number" id="tax-rate" value="10" min="0" max="100" oninput="calculateTotals()" class="w-16 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 border rounded text-sm" />
+            <input type="number" id="tax-rate" value="10" min="0" max="100" oninput="calculateTotals(); saveData();" class="w-16 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 border rounded text-sm" />
           </div>
           <div class="flex justify-between text-gray-600">
             <span>Tax Amount:</span>
@@ -127,45 +162,62 @@
         </div>
       </div>
 
-      <!-- Footer / Notes -->
+      <!-- Notes / Terms -->
       <div class="mt-12 border-t pt-4 text-xs text-gray-500">
         <p class="font-semibold mb-1">Notes / Payment Terms:</p>
-        <input type="text" value="Payment due within 15 days. Thank you for your business!" class="w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" />
+        <input type="text" id="notes" value="Payment due within 15 days. Thank you for your business!" oninput="saveData()" class="w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" />
+      </div>
+
+      <!-- Free Version Watermark (Triggers Pro Upgrades) -->
+      <div class="mt-8 text-center border-t pt-3 text-[10px] text-gray-400 uppercase tracking-widest font-semibold">
+        Generated with Free QuickInvoice — Upgrade to Pro to remove branding
       </div>
     </div>
 
-    <!-- Sidebar Ad Slot (Monetization Space) -->
+    <!-- Sidebar Ad & Upsell -->
     <aside class="no-print w-full md:w-64 flex flex-col gap-4">
-      <div class="bg-white rounded-xl p-4 shadow border border-gray-200 text-center">
-        <h4 class="font-bold text-gray-700 text-sm mb-2">Pro Feature</h4>
-        <p class="text-xs text-gray-500 mb-3">Remove watermark, add custom logo & save client data.</p>
-        <button onclick="toggleModal(true)" class="w-full bg-blue-600 text-white font-semibold py-2 text-xs rounded-lg shadow hover:bg-blue-700 transition">
+      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-100 text-center">
+        <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Pro Option</span>
+        <h4 class="font-bold text-gray-800 text-base mt-2 mb-1">Remove Watermark</h4>
+        <p class="text-xs text-gray-600 mb-4">Get custom logo uploads, zero branding, and premium PDF templates.</p>
+        <button onclick="toggleModal(true)" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 text-xs rounded-lg shadow transition">
           Unlock Pro for $5
         </button>
       </div>
-      <div class="bg-gray-200 border-2 border-dashed border-gray-300 rounded-xl p-4 h-64 flex items-center justify-center text-center text-xs text-gray-500 uppercase tracking-wider">
-        [ Sidebar Ad Unit - Google AdSense ]
+
+      <div class="bg-white border border-gray-200 rounded-xl p-3 text-center text-xs text-gray-400 min-h-[300px] flex items-center justify-center">
+        <!-- REPLACE THIS COMMENT WITH YOUR SIDEBAR GOOGLE ADSENSE CODE SLOT -->
+        <span>[ Ad Space - Insert Google AdSense Vertical Banner ]</span>
       </div>
     </aside>
   </main>
 
   <!-- Pro Upgrade Modal -->
-  <div id="pro-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+  <div id="pro-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-      <button onclick="toggleModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold">✕</button>
+      <button onclick="toggleModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-lg">✕</button>
       <div class="text-center">
         <span class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase">Upgrade</span>
         <h3 class="text-2xl font-bold text-gray-900 mt-2">QuickInvoice Pro</h3>
-        <p class="text-sm text-gray-500 mt-1">Get unlimited custom invoices with zero branding.</p>
+        <p class="text-sm text-gray-500 mt-1">Professional tools for freelancers & growing businesses.</p>
         
-        <ul class="text-left text-sm text-gray-600 my-6 space-y-2">
-          <li class="flex items-center">✓ <span class="ml-2">Custom business logo upload</span></li>
-          <li class="flex items-center">✓ <span class="ml-2">10+ Premium PDF themes</span></li>
-          <li class="flex items-center">✓ <span class="ml-2">No ad units or watermarks</span></li>
-          <li class="flex items-center">✓ <span class="ml-2">Save client directory locally</span></li>
+        <ul class="text-left text-sm text-gray-600 my-6 space-y-3">
+          <li class="flex items-center">
+            <span class="text-green-500 font-bold mr-2">✓</span> Remove "Created with QuickInvoice" watermark
+          </li>
+          <li class="flex items-center">
+            <span class="text-green-500 font-bold mr-2">✓</span> Upload your own business logo
+          </li>
+          <li class="flex items-center">
+            <span class="text-green-500 font-bold mr-2">✓</span> Remove all banner ads on workspace
+          </li>
+          <li class="flex items-center">
+            <span class="text-green-500 font-bold mr-2">✓</span> Save client directory locally
+          </li>
         </ul>
 
-        <a href="YOUR_STRIPE_CHECKOUT_LINK" target="_blank" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+        <!-- Replace 'YOUR_STRIPE_CHECKOUT_LINK' with your actual Stripe Payment Link URL -->
+        <a href="YOUR_STRIPE_CHECKOUT_LINK" target="_blank" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition text-center">
           Upgrade Now - $5/month
         </a>
       </div>
@@ -174,25 +226,32 @@
 
   <!-- JavaScript Engine -->
   <script>
-    // Set default dates
-    const today = new Date().toISOString().split('T')[0];
-    const nextTwoWeeks = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    document.getElementById('inv-date').value = today;
-    document.getElementById('due-date').value = nextTwoWeeks;
+    window.addEventListener('DOMContentLoaded', () => {
+      // Load saved dates or defaults
+      const today = new Date().toISOString().split('T')[0];
+      const nextTwoWeeks = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      document.getElementById('inv-date').value = today;
+      document.getElementById('due-date').value = nextTwoWeeks;
+
+      loadSavedData();
+      calculateTotals();
+    });
 
     function addRow() {
       const tbody = document.getElementById('items-body');
       const tr = document.createElement('tr');
       tr.className = 'border-b item-row';
       tr.innerHTML = `
-        <td class="py-2"><input type="text" value="New Service" class="w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
-        <td class="py-2 text-center"><input type="number" value="1" min="1" oninput="calculateTotals()" class="qty w-16 text-center outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
-        <td class="py-2 text-right"><input type="number" value="100.00" step="0.01" oninput="calculateTotals()" class="price w-24 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
+        <td class="py-2"><input type="text" value="New Service" oninput="saveData()" class="desc w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
+        <td class="py-2 text-center"><input type="number" value="1" min="1" oninput="calculateTotals(); saveData();" class="qty w-16 text-center outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
+        <td class="py-2 text-right"><input type="number" value="100.00" step="0.01" oninput="calculateTotals(); saveData();" class="price w-24 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
         <td class="py-2 text-right font-medium text-sm amount">100.00</td>
         <td class="py-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-500 hover:text-red-700 font-bold text-sm">✕</button></td>
       `;
       tbody.appendChild(tr);
       calculateTotals();
+      saveData();
     }
 
     function removeRow(btn) {
@@ -200,11 +259,14 @@
       if (rows.length > 1) {
         btn.closest('tr').remove();
         calculateTotals();
+        saveData();
       }
     }
 
     function calculateTotals() {
+      const sym = document.getElementById('currency-select').value;
       let subtotal = 0;
+
       document.querySelectorAll('.item-row').forEach(row => {
         const qty = parseFloat(row.querySelector('.qty').value) || 0;
         const price = parseFloat(row.querySelector('.price').value) || 0;
@@ -217,16 +279,98 @@
       const taxAmount = subtotal * (taxRate / 100);
       const totalDue = subtotal + taxAmount;
 
-      document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
-      document.getElementById('tax-amount').textContent = '$' + taxAmount.toFixed(2);
-      document.getElementById('total-due').textContent = '$' + totalDue.toFixed(2);
+      document.getElementById('subtotal').textContent = sym + subtotal.toFixed(2);
+      document.getElementById('tax-amount').textContent = sym + taxAmount.toFixed(2);
+      document.getElementById('total-due').textContent = sym + totalDue.toFixed(2);
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById('invoice-canvas');
+      element.classList.add('pdf-render');
+
+      const opt = {
+        margin:       0.3,
+        filename:     `Invoice_${document.getElementById('inv-num').value || '1001'}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save().then(() => {
+        element.classList.remove('pdf-render');
+      });
     }
 
     function toggleModal(show) {
       document.getElementById('pro-modal').classList.toggle('hidden', !show);
     }
 
-    calculateTotals();
+    // LocalStorage Data Management
+    function saveData() {
+      const data = {
+        compName: document.getElementById('comp-name').value,
+        compAddress: document.getElementById('comp-address').value,
+        compContact: document.getElementById('comp-contact').value,
+        invNum: document.getElementById('inv-num').value,
+        currency: document.getElementById('currency-select').value,
+        invDate: document.getElementById('inv-date').value,
+        dueDate: document.getElementById('due-date').value,
+        clientName: document.getElementById('client-name').value,
+        clientAddress: document.getElementById('client-address').value,
+        taxRate: document.getElementById('tax-rate').value,
+        notes: document.getElementById('notes').value,
+        items: []
+      };
+
+      document.querySelectorAll('.item-row').forEach(row => {
+        data.items.push({
+          desc: row.querySelector('.desc').value,
+          qty: row.querySelector('.qty').value,
+          price: row.querySelector('.price').value
+        });
+      });
+
+      localStorage.setItem('quickinvoice_data', JSON.stringify(data));
+    }
+
+    function loadSavedData() {
+      const raw = localStorage.getItem('quickinvoice_data');
+      if (!raw) return;
+
+      try {
+        const data = JSON.parse(raw);
+        if (data.compName) document.getElementById('comp-name').value = data.compName;
+        if (data.compAddress) document.getElementById('comp-address').value = data.compAddress;
+        if (data.compContact) document.getElementById('comp-contact').value = data.compContact;
+        if (data.invNum) document.getElementById('inv-num').value = data.invNum;
+        if (data.currency) document.getElementById('currency-select').value = data.currency;
+        if (data.invDate) document.getElementById('inv-date').value = data.invDate;
+        if (data.dueDate) document.getElementById('due-date').value = data.dueDate;
+        if (data.clientName) document.getElementById('client-name').value = data.clientName;
+        if (data.clientAddress) document.getElementById('client-address').value = data.clientAddress;
+        if (data.taxRate) document.getElementById('tax-rate').value = data.taxRate;
+        if (data.notes) document.getElementById('notes').value = data.notes;
+
+        if (data.items && data.items.length > 0) {
+          const tbody = document.getElementById('items-body');
+          tbody.innerHTML = '';
+          data.items.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b item-row';
+            tr.innerHTML = `
+              <td class="py-2"><input type="text" value="${item.desc}" oninput="saveData()" class="desc w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
+              <td class="py-2 text-center"><input type="number" value="${item.qty}" min="1" oninput="calculateTotals(); saveData();" class="qty w-16 text-center outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
+              <td class="py-2 text-right"><input type="number" value="${item.price}" step="0.01" oninput="calculateTotals(); saveData();" class="price w-24 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
+              <td class="py-2 text-right font-medium text-sm amount">0.00</td>
+              <td class="py-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-500 hover:text-red-700 font-bold text-sm">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (e) {
+        console.error("Could not load local data", e);
+      }
+    }
   </script>
 </body>
 </html>
