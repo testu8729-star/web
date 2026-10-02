@@ -23,6 +23,13 @@
       padding: 40px !important;
       background: #ffffff !important;
     }
+    /* Hide input spin buttons for cleaner print/PDF view */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] { -moz-appearance: textfield; }
   </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 min-h-screen flex flex-col">
@@ -68,11 +75,11 @@
           <h1 class="text-3xl font-extrabold text-blue-600 tracking-wider">INVOICE</h1>
           <div class="mt-2 text-sm text-gray-600 space-y-1">
             <div>
-              <label class="font-semibold">Invoice #:</label>
+              <label class="font-semibold" for="inv-num">Invoice #:</label>
               <input type="text" id="inv-num" value="INV-1001" oninput="saveData()" class="font-mono text-right w-28 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" />
             </div>
             <div>
-              <label class="font-semibold">Currency:</label>
+              <label class="font-semibold" for="currency-select">Currency:</label>
               <select id="currency-select" onchange="calculateTotals(); saveData();" class="text-right outline-none bg-gray-50 hover:bg-gray-100 focus:bg-gray-100 p-1 rounded font-semibold text-gray-700 cursor-pointer border border-gray-200">
                 <option value="$">$ (USD)</option>
                 <option value="€">€ (EUR)</option>
@@ -82,11 +89,11 @@
               </select>
             </div>
             <div>
-              <label class="font-semibold">Date:</label>
+              <label class="font-semibold" for="inv-date">Date:</label>
               <input type="date" id="inv-date" onchange="saveData()" class="text-right w-32 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" />
             </div>
             <div>
-              <label class="font-semibold">Due Date:</label>
+              <label class="font-semibold" for="due-date">Due Date:</label>
               <input type="date" id="due-date" onchange="saveData()" class="text-right w-32 outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" />
             </div>
           </div>
@@ -117,14 +124,14 @@
               <input type="text" value="Web Design & Development" oninput="saveData()" class="desc w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" />
             </td>
             <td class="py-2 text-center">
-              <input type="number" value="1" min="1" oninput="calculateTotals(); saveData();" class="qty w-16 text-center outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" />
+              <input type="number" value="1" min="0" step="any" oninput="calculateTotals(); saveData();" class="qty w-16 text-center outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" />
             </td>
             <td class="py-2 text-right">
               <input type="number" value="1200.00" step="0.01" oninput="calculateTotals(); saveData();" class="price w-24 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" />
             </td>
             <td class="py-2 text-right font-medium text-sm amount">1200.00</td>
             <td class="py-2 text-center no-print">
-              <button onclick="removeRow(this)" class="text-red-500 hover:text-red-700 font-bold text-sm">✕</button>
+              <button onclick="removeRow(this)" class="text-red-500 hover:text-red-700 font-bold text-sm" title="Remove item">✕</button>
             </td>
           </tr>
         </tbody>
@@ -142,8 +149,8 @@
             <span id="subtotal" class="font-semibold">$1,200.00</span>
           </div>
           <div class="flex justify-between items-center text-gray-600">
-            <span>Tax Rate (%):</span>
-            <input type="number" id="tax-rate" value="10" min="0" max="100" oninput="calculateTotals(); saveData();" class="w-16 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 border rounded text-sm" />
+            <label for="tax-rate">Tax Rate (%):</label>
+            <input type="number" id="tax-rate" value="10" min="0" max="100" step="0.1" oninput="calculateTotals(); saveData();" class="w-16 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 border rounded text-sm" />
           </div>
           <div class="flex justify-between text-gray-600">
             <span>Tax Amount:</span>
@@ -206,7 +213,8 @@
           </li>
         </ul>
 
-        <a href="https://buy.stripe.com/test_cNi6oIbdQ3N07ZCer90Ba00" target="_blank" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition text-center">
+        <!-- REPLACE THIS WITH YOUR LIVE STRIPE CHECKOUT LINK -->
+        <a href="https://buy.stripe.com/YOUR_LIVE_STRIPE_LINK" target="_blank" rel="noopener noreferrer" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition text-center">
           Upgrade Now - $5/month
         </a>
       </div>
@@ -220,21 +228,17 @@
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('pro') === 'true') {
         localStorage.setItem('isPro', 'true');
-        // Clean URL parameter so it looks clean
         const cleanUrl = window.location.origin + window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
       }
 
-      // 2. Check and apply Pro status
+      // 2. Apply Pro status
       applyProStatus();
 
-      // Set default dates
-      const today = new Date().toISOString().split('T')[0];
-      const nextTwoWeeks = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      document.getElementById('inv-date').value = today;
-      document.getElementById('due-date').value = nextTwoWeeks;
-
+      // 3. Load saved data (sets dates if none saved)
       loadSavedData();
+
+      // 4. Calculate initial totals
       calculateTotals();
     });
 
@@ -242,7 +246,6 @@
       const isPro = localStorage.getItem('isPro') === 'true';
 
       if (isPro) {
-        // Hide watermarks and ads
         const watermark = document.getElementById('watermark');
         if (watermark) watermark.style.display = 'none';
 
@@ -252,7 +255,6 @@
         const sidebarAds = document.getElementById('sidebar-ads');
         if (sidebarAds) sidebarAds.style.display = 'none';
 
-        // Update Upgrade Button in Header to a Pro Badge
         const btn = document.getElementById('upgrade-btn');
         if (btn) {
           btn.className = 'bg-emerald-500 text-slate-900 font-bold py-2 px-4 rounded-lg shadow cursor-default';
@@ -262,17 +264,29 @@
       }
     }
 
-    function addRow() {
+    function addRow(desc = "New Service", qty = 1, price = 100.00) {
       const tbody = document.getElementById('items-body');
       const tr = document.createElement('tr');
       tr.className = 'border-b item-row';
+      
       tr.innerHTML = `
-        <td class="py-2"><input type="text" value="New Service" oninput="saveData()" class="desc w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
-        <td class="py-2 text-center"><input type="number" value="1" min="1" oninput="calculateTotals(); saveData();" class="qty w-16 text-center outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
-        <td class="py-2 text-right"><input type="number" value="100.00" step="0.01" oninput="calculateTotals(); saveData();" class="price w-24 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
-        <td class="py-2 text-right font-medium text-sm amount">100.00</td>
-        <td class="py-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-500 hover:text-red-700 font-bold text-sm">✕</button></td>
+        <td class="py-2"><input type="text" class="desc w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
+        <td class="py-2 text-center"><input type="number" min="0" step="any" class="qty w-16 text-center outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
+        <td class="py-2 text-right"><input type="number" step="0.01" class="price w-24 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
+        <td class="py-2 text-right font-medium text-sm amount">0.00</td>
+        <td class="py-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-500 hover:text-red-700 font-bold text-sm" title="Remove item">✕</button></td>
       `;
+
+      // Safe value assignment
+      tr.querySelector('.desc').value = desc;
+      tr.querySelector('.qty').value = qty;
+      tr.querySelector('.price').value = parseFloat(price).toFixed(2);
+
+      // Event listeners
+      tr.querySelector('.desc').addEventListener('input', saveData);
+      tr.querySelector('.qty').addEventListener('input', () => { calculateTotals(); saveData(); });
+      tr.querySelector('.price').addEventListener('input', () => { calculateTotals(); saveData(); });
+
       tbody.appendChild(tr);
       calculateTotals();
       saveData();
@@ -316,7 +330,7 @@
         margin:       0.3,
         filename:     `Invoice_${document.getElementById('inv-num').value || '1001'}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
 
@@ -358,7 +372,16 @@
 
     function loadSavedData() {
       const raw = localStorage.getItem('quickinvoice_data');
-      if (!raw) return;
+      
+      // Default dates fallback
+      const today = new Date().toISOString().split('T')[0];
+      const nextTwoWeeks = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      if (!raw) {
+        document.getElementById('inv-date').value = today;
+        document.getElementById('due-date').value = nextTwoWeeks;
+        return;
+      }
 
       try {
         const data = JSON.parse(raw);
@@ -367,27 +390,18 @@
         if (data.compContact) document.getElementById('comp-contact').value = data.compContact;
         if (data.invNum) document.getElementById('inv-num').value = data.invNum;
         if (data.currency) document.getElementById('currency-select').value = data.currency;
-        if (data.invDate) document.getElementById('inv-date').value = data.invDate;
-        if (data.dueDate) document.getElementById('due-date').value = data.dueDate;
+        document.getElementById('inv-date').value = data.invDate || today;
+        document.getElementById('due-date').value = data.dueDate || nextTwoWeeks;
         if (data.clientName) document.getElementById('client-name').value = data.clientName;
         if (data.clientAddress) document.getElementById('client-address').value = data.clientAddress;
-        if (data.taxRate) document.getElementById('tax-rate').value = data.taxRate;
+        if (data.taxRate !== undefined) document.getElementById('tax-rate').value = data.taxRate;
         if (data.notes) document.getElementById('notes').value = data.notes;
 
         if (data.items && data.items.length > 0) {
           const tbody = document.getElementById('items-body');
-          tbody.innerHTML = '';
+          tbody.innerHTML = ''; // Clear initial static row
           data.items.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.className = 'border-b item-row';
-            tr.innerHTML = `
-              <td class="py-2"><input type="text" value="${item.desc}" oninput="saveData()" class="desc w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
-              <td class="py-2 text-center"><input type="number" value="${item.qty}" min="1" oninput="calculateTotals(); saveData();" class="qty w-16 text-center outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
-              <td class="py-2 text-right"><input type="number" value="${item.price}" step="0.01" oninput="calculateTotals(); saveData();" class="price w-24 text-right outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded text-sm" /></td>
-              <td class="py-2 text-right font-medium text-sm amount">0.00</td>
-              <td class="py-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-500 hover:text-red-700 font-bold text-sm">✕</button></td>
-            `;
-            tbody.appendChild(tr);
+            addRow(item.desc, item.qty, item.price);
           });
         }
       } catch (e) {
