@@ -18,7 +18,6 @@
       body { background: white !important; padding: 0 !important; }
       .print-area { box-shadow: none !important; border: none !important; width: 100% !important; margin: 0 !important; }
     }
-    /* PDF Export Container Tweaks */
     .pdf-render {
       width: 800px !important;
       padding: 40px !important;
@@ -39,14 +38,14 @@
         <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/></svg>
         <span>Download PDF</span>
       </button>
-      <button onclick="toggleModal(true)" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 px-4 rounded-lg shadow transition">
+      <button id="upgrade-btn" onclick="toggleModal(true)" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 px-4 rounded-lg shadow transition">
         Upgrade to Pro ⭐
       </button>
     </div>
   </header>
 
   <!-- Top Ad Unit Banner -->
-  <div class="no-print max-w-5xl mx-auto w-full mt-4 px-4">
+  <div id="top-ad" class="no-print max-w-5xl mx-auto w-full mt-4 px-4">
     <div class="bg-white border border-gray-200 rounded-lg p-2 text-center text-xs text-gray-400 min-h-[90px] flex items-center justify-center">
       <span>[ Ad Space - Insert Google AdSense Banner Slot ]</span>
     </div>
@@ -164,13 +163,13 @@
       </div>
 
       <!-- Free Version Watermark -->
-      <div class="mt-8 text-center border-t pt-3 text-[10px] text-gray-400 uppercase tracking-widest font-semibold">
+      <div id="watermark" class="mt-8 text-center border-t pt-3 text-[10px] text-gray-400 uppercase tracking-widest font-semibold">
         Generated with Free QuickInvoice — Upgrade to Pro to remove branding
       </div>
     </div>
 
     <!-- Sidebar Ad & Upsell -->
-    <aside class="no-print w-full md:w-64 flex flex-col gap-4">
+    <aside id="sidebar-ads" class="no-print w-full md:w-64 flex flex-col gap-4">
       <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-100 text-center">
         <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Pro Option</span>
         <h4 class="font-bold text-gray-800 text-base mt-2 mb-1">Remove Watermark</h4>
@@ -205,12 +204,8 @@
           <li class="flex items-center">
             <span class="text-green-500 font-bold mr-2">✓</span> Remove all banner ads on workspace
           </li>
-          <li class="flex items-center">
-            <span class="text-green-500 font-bold mr-2">✓</span> Save client directory locally
-          </li>
         </ul>
 
-        <!-- Active Stripe Checkout Link -->
         <a href="https://buy.stripe.com/test_cNi6oIbdQ3N07ZCer90Ba00" target="_blank" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition text-center">
           Upgrade Now - $5/month
         </a>
@@ -221,15 +216,51 @@
   <!-- JavaScript Engine -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
+      // 1. Check for Stripe redirect parameter (?pro=true)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('pro') === 'true') {
+        localStorage.setItem('isPro', 'true');
+        // Clean URL parameter so it looks clean
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+
+      // 2. Check and apply Pro status
+      applyProStatus();
+
+      // Set default dates
       const today = new Date().toISOString().split('T')[0];
       const nextTwoWeeks = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      
       document.getElementById('inv-date').value = today;
       document.getElementById('due-date').value = nextTwoWeeks;
 
       loadSavedData();
       calculateTotals();
     });
+
+    function applyProStatus() {
+      const isPro = localStorage.getItem('isPro') === 'true';
+
+      if (isPro) {
+        // Hide watermarks and ads
+        const watermark = document.getElementById('watermark');
+        if (watermark) watermark.style.display = 'none';
+
+        const topAd = document.getElementById('top-ad');
+        if (topAd) topAd.style.display = 'none';
+
+        const sidebarAds = document.getElementById('sidebar-ads');
+        if (sidebarAds) sidebarAds.style.display = 'none';
+
+        // Update Upgrade Button in Header to a Pro Badge
+        const btn = document.getElementById('upgrade-btn');
+        if (btn) {
+          btn.className = 'bg-emerald-500 text-slate-900 font-bold py-2 px-4 rounded-lg shadow cursor-default';
+          btn.innerHTML = '<span>Pro Account ✓</span>';
+          btn.onclick = null;
+        }
+      }
+    }
 
     function addRow() {
       const tbody = document.getElementById('items-body');
