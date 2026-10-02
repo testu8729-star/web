@@ -48,11 +48,6 @@
   <!-- Top Ad Unit Banner -->
   <div class="no-print max-w-5xl mx-auto w-full mt-4 px-4">
     <div class="bg-white border border-gray-200 rounded-lg p-2 text-center text-xs text-gray-400 min-h-[90px] flex items-center justify-center">
-      <!-- REPLACE THIS COMMENT WITH YOUR GOOGLE ADSENSE CODE SLOT -->
-      <!-- Example:
-      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-      -->
       <span>[ Ad Space - Insert Google AdSense Banner Slot ]</span>
     </div>
   </div>
@@ -79,7 +74,7 @@
             </div>
             <div>
               <label class="font-semibold">Currency:</label>
-              <select id="currency-select" onchange="calculateTotals(); saveData();" class="text-right outline-none bg-transparent hover:bg-gray-50 focus:bg-gray-50 p-1 rounded font-semibold text-gray-700">
+              <select id="currency-select" onchange="calculateTotals(); saveData();" class="text-right outline-none bg-gray-50 hover:bg-gray-100 focus:bg-gray-100 p-1 rounded font-semibold text-gray-700 cursor-pointer border border-gray-200">
                 <option value="$">$ (USD)</option>
                 <option value="€">€ (EUR)</option>
                 <option value="£">£ (GBP)</option>
@@ -168,7 +163,7 @@
         <input type="text" id="notes" value="Payment due within 15 days. Thank you for your business!" oninput="saveData()" class="w-full outline-none hover:bg-gray-50 focus:bg-gray-50 p-1 rounded" />
       </div>
 
-      <!-- Free Version Watermark (Triggers Pro Upgrades) -->
+      <!-- Free Version Watermark -->
       <div class="mt-8 text-center border-t pt-3 text-[10px] text-gray-400 uppercase tracking-widest font-semibold">
         Generated with Free QuickInvoice — Upgrade to Pro to remove branding
       </div>
@@ -186,7 +181,6 @@
       </div>
 
       <div class="bg-white border border-gray-200 rounded-xl p-3 text-center text-xs text-gray-400 min-h-[300px] flex items-center justify-center">
-        <!-- REPLACE THIS COMMENT WITH YOUR SIDEBAR GOOGLE ADSENSE CODE SLOT -->
         <span>[ Ad Space - Insert Google AdSense Vertical Banner ]</span>
       </div>
     </aside>
@@ -216,8 +210,8 @@
           </li>
         </ul>
 
-        <!-- Replace 'YOUR_STRIPE_CHECKOUT_LINK' with your actual Stripe Payment Link URL -->
-        <a href="YOUR_STRIPE_CHECKOUT_LINK" target="_blank" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition text-center">
+        <!-- Replace '#' below with your actual payment link URL (e.g., https://buy.stripe.com/...) -->
+        <a href="#" onclick="alert('Please add your payment link URL in the code.'); return false;" target="_blank" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition text-center">
           Upgrade Now - $5/month
         </a>
       </div>
@@ -227,7 +221,6 @@
   <!-- JavaScript Engine -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      // Load saved dates or defaults
       const today = new Date().toISOString().split('T')[0];
       const nextTwoWeeks = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       
@@ -305,7 +298,6 @@
       document.getElementById('pro-modal').classList.toggle('hidden', !show);
     }
 
-    // LocalStorage Data Management
     function saveData() {
       const data = {
         compName: document.getElementById('comp-name').value,
